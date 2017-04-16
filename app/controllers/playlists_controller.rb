@@ -2,12 +2,12 @@ class PlaylistsController < ApplicationController
   before_action :set_playlist, only: [:show, :update, :destroy]
 
   def index
-    @playlists = Playlist.all
+    @playlists = current_user.playlists
     json_response(@playlists)
   end
 
   def create
-    @playlist = Playlist.create!(playlist_params)
+    @playlist = current_user.playlists.create!(playlist_params)
     json_response(@playlist, :created)
   end
 
@@ -28,7 +28,7 @@ class PlaylistsController < ApplicationController
   private
 
   def playlist_params
-    params.permit(:title, :created_by)
+    params.permit(:title)
   end
 
   def set_playlist

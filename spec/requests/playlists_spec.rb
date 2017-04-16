@@ -2,11 +2,13 @@ require 'rails_helper'
 
 RSpec.describe 'Playlists API', type: :request do
 
-  let!(:playlists) { create_list(:playlist, 10) }
+  let(:user) { create(:user) }
+  let!(:playlists) { create_list(:playlist, 10, created_by: user.id) }
   let(:playlist_id) { playlists.first.id }
+  let(:headers) { valid_headers }
 
   describe 'GET /playlists' do
-    before { get '/playlists' }
+    before { get '/playlists', params: {}, headers: headers }
 
     it 'returns playlists' do
       expect(json).not_to be_empty
@@ -19,7 +21,7 @@ RSpec.describe 'Playlists API', type: :request do
   end
 
   describe 'GET /playlists/:id' do
-    before { get "/playlists/#{playlist_id}" }
+    before { get "/playlists/#{playlist_id}", params: {}, headers: headers }
 
     context 'when the record exists' do
       it 'returns the playlist' do
@@ -46,10 +48,12 @@ RSpec.describe 'Playlists API', type: :request do
   end
 
   describe 'POST /playlists' do
-    let(:valid_attributes) { { title: 'First Playlist', created_by: '1' } }
+    let(:valid_attributes) do
+      { title: 'First Playlist', created_by: user.id.to_s }.to_json
+    end
 
     context 'when request is valid' do
-      before { post '/playlists', params: valid_attributes }
+      before { post '/playlists', params: valid_attributes, headers: headers }
 
       it 'creates playlist' do
         expect(json['title']).to eq('First Playlist')
@@ -61,23 +65,24 @@ RSpec.describe 'Playlists API', type: :request do
     end
 
     context 'when request is invalid' do
-      before { post '/playlists', params: { title: 'lol no' } }
+      let(:valid_attributes) { { title: nil }.to_json }
+      before { post '/playlists', params: valid_attributes, headers: headers }
 
       it 'returns status code 422' do
         expect(response).to have_http_status(422)
       end
 
       it 'returns validation failure message' do
-        expect(response.body).to match(/Validation failed: Created by can't be blank/)
+        expect(response.body).to match(/Validation failed: Title can't be blank/)
       end
     end
   end
 
   describe 'PUT /playlists/:id' do
-    let(:valid_attributes) { { title: 'Second Playlist' } }
+    let(:valid_attributes) { { title: 'Second Playlist' }.to_json }
 
     context 'when the record exists' do
-      before { put "/playlists/#{playlist_id}", params: valid_attributes }
+      before { put "/playlists/#{playlist_id}", params: valid_attributes, headers: headers }
 
       it 'updates the record' do
         expect(response.body).to be_empty
@@ -90,7 +95,7 @@ RSpec.describe 'Playlists API', type: :request do
   end
 
   describe 'DELETE /playlists/:id' do
-    before { delete "/playlists/#{playlist_id}" }
+    before { delete "/playlists/#{playlist_id}", params: {}, headers: headers }
 
     it 'returns status code 204' do
       expect(response).to have_http_status(204)

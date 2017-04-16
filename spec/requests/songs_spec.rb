@@ -1,13 +1,15 @@
 require 'rails_helper'
 
 RSpec.describe 'Songs API' do
-  let!(:playlist) { create(:playlist) }
+  let(:user) { create(:user) }
+  let!(:playlist) { create(:playlist, created_by: user.id) }
   let!(:songs) { create_list(:song, 20, playlist_id: playlist.id) }
   let(:playlist_id) { playlist.id }
   let(:id) { songs.first.id }
+  let(:headers) { valid_headers }
 
   describe 'GET /playlists/:playlist_id/songs' do
-    before { get "/playlists/#{playlist_id}/songs" }
+    before { get "/playlists/#{playlist_id}/songs", params: {}, headers: headers }
 
     context 'when song exists' do
       it 'returns status code 200' do
@@ -33,7 +35,7 @@ RSpec.describe 'Songs API' do
   end
   
   describe 'GET /playlists/:playlist_id/songs/:id' do
-    before { get "/playlists/#{playlist_id}/songs/#{id}" }
+    before { get "/playlists/#{playlist_id}/songs/#{id}", params: {}, headers: headers }
 
     context 'when playlist song exists' do
       it 'returns status code 200' do
@@ -59,10 +61,12 @@ RSpec.describe 'Songs API' do
   end
   
   describe 'POST /playlists/:playlist_id/songs' do
-    let(:valid_attributes) { { title: 'My New Song', artist: 'The Best Band', length: '300' } }
+    let(:valid_attributes) { { title: 'My New Song', artist: 'The Best Band', length: '300' }.to_json }
 
     context 'when request attributes are valid' do
-      before { post "/playlists/#{playlist_id}/songs", params: valid_attributes }
+      before do 
+        post "/playlists/#{playlist_id}/songs", params: valid_attributes, headers: headers
+      end
 
       it 'returns status code 201' do
         expect(response).to have_http_status(201)
@@ -70,7 +74,7 @@ RSpec.describe 'Songs API' do
     end
     
     context 'when an invalid request' do
-      before { post "/playlists/#{playlist_id}/songs", params: { } }
+      before { post "/playlists/#{playlist_id}/songs", params: {}, headers: headers }
 
       it 'returns status code 422' do
         expect(response).to have_http_status(422)
@@ -83,9 +87,11 @@ RSpec.describe 'Songs API' do
   end
   
   describe 'PUT /playlists/:playlist_id/songs/:id' do
-    let(:valid_attributes) { { title: 'Newest Song', artist: 'Fancy Band', length: '400' } }
+    let(:valid_attributes) { { title: 'Newest Song', artist: 'Fancy Band', length: '400' }.to_json }
 
-    before { put "/playlists/#{playlist_id}/songs/#{id}", params: valid_attributes }
+    before do
+      put "/playlists/#{playlist_id}/songs/#{id}", params: valid_attributes, headers: headers
+    end
 
     context 'when song exists' do
       it 'returns status code 204' do
@@ -98,7 +104,7 @@ RSpec.describe 'Songs API' do
       end
     end
     
-    context 'when the item does not exists' do
+    context 'when the song does not exists' do
       let(:id) { 0 }
 
       it 'returns status code 404' do
@@ -112,7 +118,7 @@ RSpec.describe 'Songs API' do
   end
   
   describe 'DELETE /playlists/:playlist_id/songs/:id' do
-    before { delete "/playlists/#{playlist_id}/songs/#{id}" }
+    before { delete "/playlists/#{playlist_id}/songs/#{id}", params: {}, headers: headers }
 
     it 'returns status code 204' do
       expect(response).to have_http_status(204)
