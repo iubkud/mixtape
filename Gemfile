@@ -10,6 +10,7 @@ gem 'sqlite3'
 gem 'puma', '~> 3.0'
 gem 'bcrypt', '~> 3.1.7'
 gem 'jwt'
+gem 'rspotify'
 
 group :development, :test do
   gem 'byebug', platform: :mri
